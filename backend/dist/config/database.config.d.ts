@@ -1,1 +1,2 @@
-export declare const DatabaseConfig: import("@nestjs/common").DynamicModule;
+import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+export declare const databaseConfig: TypeOrmModuleOptions;

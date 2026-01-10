@@ -1,32 +1,72 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserCrudModule } from './modules/user-crud/user-crud.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MoviesModule } from './modules/movies/movies.module';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+
+const mysql = require('mysql2/promise');
+
+interface EnsureDatabaseOptions {
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  database: string;
+}
+
+async function ensureDatabaseExists(options: EnsureDatabaseOptions) {
+  const connection = await mysql.createConnection({
+    host: options.host,
+    port: options.port,
+    user: options.username,
+    password: options.password,
+  });
+
+  try {
+    await connection.query(
+      'CREATE DATABASE IF NOT EXISTS ?? CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci',
+      [options.database],
+    );
+  } finally {
+    await connection.end();
+  }
+}
 
 @Module({
   imports: [
-    // ✅ Load environment variables
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: '.env',
     }),
-
-    // ✅ Database connection
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'mysql',
-        host: config.get<string>('DB_HOST'),
-        port: config.get<number>('DB_PORT'),
-        username: config.get<string>('DB_USER'),
-        password: config.get<string>('DB_PASS'),
-        database: config.get<string>('DB_NAME'),
-        autoLoadEntities: true, // automatically load entities
-        synchronize: true, // ⚠️ only for dev (creates tables automatically)
-      }),
-    }),
+      async useFactory(config: ConfigService) {
+        const host = config.get<string>('DB_HOST') || 'localhost';
+        const port = parseInt(config.get<string>('DB_PORT') || '3306', 10);
+        const username = config.get<string>('DB_USER') || 'root';
+        const password = config.get<string>('DB_PASS') || '';
+        const database = config.get<string>('DB_NAME') || 'itec_116_db';
 
-    UserCrudModule, // ✅ only your existing module
+        await ensureDatabaseExists({ host, port, username, password, database });
+
+        return {
+          type: 'mysql',
+          host,
+          port,
+          username,
+          password,
+          database,
+          entities: [__dirname + '/**/*.entity{.ts,.js}'],
+          synchronize: true,
+          logging: ['query', 'error'],
+        };
+      },
+    }),
+    MoviesModule,
   ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}

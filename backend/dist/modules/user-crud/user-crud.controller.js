@@ -11,9 +11,9 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserCrudController = void 0;
 const common_1 = require("@nestjs/common");
+const swagger_1 = require("@nestjs/swagger");
 const user_crud_service_1 = require("./user-crud.service");
 let UserCrudController = class UserCrudController {
-    userCrudService;
     constructor(userCrudService) {
         this.userCrudService = userCrudService;
     }
@@ -24,11 +24,18 @@ let UserCrudController = class UserCrudController {
 exports.UserCrudController = UserCrudController;
 __decorate([
     (0, common_1.Get)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Fetch all users' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'List of all users',
+        isArray: true,
+    }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], UserCrudController.prototype, "findAll", null);
 exports.UserCrudController = UserCrudController = __decorate([
+    (0, swagger_1.ApiTags)('users'),
     (0, common_1.Controller)('user-crud'),
     __metadata("design:paramtypes", [user_crud_service_1.UserCrudService])
 ], UserCrudController);
