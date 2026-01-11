@@ -11,6 +11,7 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const config_1 = require("@nestjs/config");
 const movies_module_1 = require("./modules/movies/movies.module");
+const user_crud_module_1 = require("./modules/user-crud/user-crud.module");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const mysql = require('mysql2/promise');
@@ -55,13 +56,14 @@ exports.AppModule = AppModule = __decorate([
                         username,
                         password,
                         database,
-                        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+                        entities: [__dirname + '/typeorm/entities/**/*.{ts,js}', __dirname + '/**/*.entity{.ts,.js}'],
                         synchronize: true,
                         logging: ['query', 'error'],
                     };
                 },
             }),
             movies_module_1.MoviesModule,
+            user_crud_module_1.UserCrudModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

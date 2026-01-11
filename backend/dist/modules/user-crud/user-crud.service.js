@@ -17,18 +17,39 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const users_1 = require("../../typeorm/entities/users");
+const admin_1 = require("../../typeorm/entities/admin");
 let UserCrudService = class UserCrudService {
-    constructor(userRepository) {
+    constructor(userRepository, adminRepository) {
         this.userRepository = userRepository;
+        this.adminRepository = adminRepository;
     }
     findAll() {
         return this.userRepository.find();
+    }
+    async create(createUserDto) {
+        const role = createUserDto.role || 'user';
+        if (role === 'admin') {
+            const admin = this.adminRepository.create({
+                ...createUserDto,
+                role: 'admin',
+            });
+            return await this.adminRepository.save(admin);
+        }
+        else {
+            const user = this.userRepository.create({
+                ...createUserDto,
+                role: 'user',
+            });
+            return await this.userRepository.save(user);
+        }
     }
 };
 exports.UserCrudService = UserCrudService;
 exports.UserCrudService = UserCrudService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(users_1.User)),
-    __metadata("design:paramtypes", [typeorm_2.Repository])
+    __param(1, (0, typeorm_1.InjectRepository)(admin_1.Admin)),
+    __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository])
 ], UserCrudService);
 //# sourceMappingURL=user-crud.service.js.map

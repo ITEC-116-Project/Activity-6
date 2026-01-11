@@ -12,13 +12,14 @@ const typeorm_1 = require("@nestjs/typeorm");
 const user_crud_service_1 = require("./user-crud.service");
 const user_crud_controller_1 = require("./user-crud.controller");
 const users_1 = require("../../typeorm/entities/users");
+const admin_1 = require("../../typeorm/entities/admin");
 let UserCrudModule = class UserCrudModule {
 };
 exports.UserCrudModule = UserCrudModule;
 exports.UserCrudModule = UserCrudModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forFeature([users_1.User]),
+            typeorm_1.TypeOrmModule.forFeature([users_1.User, admin_1.Admin]),
         ],
         controllers: [user_crud_controller_1.UserCrudController],
         providers: [user_crud_service_1.UserCrudService],

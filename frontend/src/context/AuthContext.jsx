@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }) => {
     return { success: false, error: 'Invalid email or password' };
   };
 
-  const signup = ({ name, email, password, role }) => {
+  const signup = async ({ name, email, password, role }) => {
     const trimmedName = name.trim();
     const normalizedEmail = email.trim().toLowerCase();
     const sanitizedPassword = password.trim();
@@ -56,18 +56,46 @@ export const AuthProvider = ({ children }) => {
       return { success: false, error: 'Email already exists' };
     }
 
-    const newUser = {
-      id: Date.now(),
-      name: trimmedName,
-      email: normalizedEmail,
-      password: sanitizedPassword,
-      role: normalizedRole
-    };
+    try {
+      // Send user data to backend
+      const response = await fetch('http://localhost:3000/user-crud', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: trimmedName,
+          email: normalizedEmail,
+          password: sanitizedPassword,
+          role: normalizedRole,
+          user_id: Date.now(),
+        }),
+      });
 
-    setUsers(prev => [...prev, newUser]);
+      if (!response.ok) {
+        const errorData = await response.json();
+        return { success: false, error: errorData.message || 'Failed to create user' };
+      }
 
-    const { password: _pw, ...userWithoutPassword } = newUser;
-    return { success: true, user: userWithoutPassword };
+      const createdUser = await response.json();
+
+      // Also add to local state for immediate use
+      const newUser = {
+        id: createdUser.id || Date.now(),
+        name: trimmedName,
+        email: normalizedEmail,
+        password: sanitizedPassword,
+        role: normalizedRole
+      };
+
+      setUsers(prev => [...prev, newUser]);
+
+      const { password: _pw, ...userWithoutPassword } = newUser;
+      return { success: true, user: userWithoutPassword };
+    } catch (error) {
+      console.error('Signup error:', error);
+      return { success: false, error: 'Failed to create account. Please try again.' };
+    }
   };
 
   const logout = () => {

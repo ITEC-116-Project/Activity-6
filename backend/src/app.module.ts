@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MoviesModule } from './modules/movies/movies.module';
+import { UserCrudModule } from './modules/user-crud/user-crud.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -58,13 +59,14 @@ async function ensureDatabaseExists(options: EnsureDatabaseOptions) {
           username,
           password,
           database,
-          entities: [__dirname + '/**/*.entity{.ts,.js}'],
+          entities: [__dirname + '/typeorm/entities/**/*.{ts,js}', __dirname + '/**/*.entity{.ts,.js}'],
           synchronize: true,
           logging: ['query', 'error'],
         };
       },
     }),
     MoviesModule,
+    UserCrudModule,
   ],
   controllers: [AppController],
   providers: [AppService],

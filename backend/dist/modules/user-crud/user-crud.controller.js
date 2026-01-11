@@ -8,6 +8,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserCrudController = void 0;
 const common_1 = require("@nestjs/common");
@@ -19,6 +22,9 @@ let UserCrudController = class UserCrudController {
     }
     findAll() {
         return this.userCrudService.findAll();
+    }
+    create(createUserDto) {
+        return this.userCrudService.create(createUserDto);
     }
 };
 exports.UserCrudController = UserCrudController;
@@ -34,6 +40,18 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], UserCrudController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Post)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Create a new user' }),
+    (0, swagger_1.ApiResponse)({
+        status: 201,
+        description: 'User created successfully',
+    }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], UserCrudController.prototype, "create", null);
 exports.UserCrudController = UserCrudController = __decorate([
     (0, swagger_1.ApiTags)('users'),
     (0, common_1.Controller)('user-crud'),

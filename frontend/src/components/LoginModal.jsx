@@ -45,7 +45,7 @@ const AuthPage = () => {
 
   const handleRoleChange = (role) => setSignupForm(prev => ({ ...prev, role }));
 
-  const handleSignup = (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
     if (!signupForm.name.trim() || !signupForm.email.trim() || !signupForm.password.trim()) {
       notify({ icon: 'warning', title: 'Missing details', text: 'Please complete every field to continue.' });
@@ -59,8 +59,8 @@ const AuthPage = () => {
 
     setIsProcessing(prev => ({ ...prev, signup: true }));
 
-    setTimeout(() => {
-      const result = signup(signupForm);
+    try {
+      const result = await signup(signupForm);
       if (result.success) {
         const signupEmail = signupForm.email;
         notify({
@@ -74,8 +74,11 @@ const AuthPage = () => {
       } else {
         notify({ icon: 'error', title: 'Sign up failed', text: result.error });
       }
+    } catch (error) {
+      notify({ icon: 'error', title: 'Sign up failed', text: 'An error occurred. Please try again.' });
+    } finally {
       setIsProcessing(prev => ({ ...prev, signup: false }));
-    }, 700);
+    }
   };
 
   const handleDemoLogin = (role) => {
