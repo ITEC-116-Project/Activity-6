@@ -124,123 +124,35 @@ const MainPage = () => {
     return 'U';
   };
 
-  const [movies, setMovies] = useState(() => {
-    const defaultMovies = [
-      {
-        id: 1,
-        title: "Bad Boys For Life",
-        poster: "bb.jpg",
-        description: "Detectives Mike Lowrey and Marcus Burnett reunite when a dangerous crime lord targets Mike’s past. As they face new enemies, they must work together one last time to stop a deadly threat.",
-        genres: ["Action", "Comedy", "Crime", "Thriller"],
-        casts: ["Will Smith", "Martin Lawrence", "Joe Pantoliano"],
-        releaseDate: "January 17, 2020",
-        duration: "124 minutes",
-        reviews: [
-          { id: 1, user: "John Doe", rating: 5, comment: "Absolutely masterpiece! One of the best films ever made." },
-          { id: 2, user: "Jane Smith", rating: 5, comment: "Incredible storytelling and acting." }
-        ]
-      },
-      {
-        id: 2,
-        title: "Five Nights at Freddy's",
-        poster: "fnf.jpg",
-        description: "A troubled security guard takes a night shift at an abandoned family entertainment center, only to discover that the animatronic mascots come alive after dark with deadly intentions.",
-        genres: ["Horror", "Mystery", "Thriller"],
-        casts: ["Josh Hutcherson", "Elizabeth Lail", "Piper Rubio"],
-        releaseDate: "October 27, 2023",
-        duration: "1 hour 50 minutes",
-        reviews: [
-          { id: 1, user: "Mike Johnson", rating: 4, comment: "Mind-bending and visually stunning." }
-        ]
-      },
-      {
-        id: 3,
-        title: "Stranger Things",
-        poster: "st.jpg",
-        description: "When a young boy mysteriously disappears, a small town uncovers secret experiments, supernatural forces, and a strange girl with powerful abilities connected to another dimension called the Upside Down.",
-        genres: ["Science Fiction", "Horror", "Drama"],
-        casts: ["Millie Bobby Brown", "Finn Wolfhard", "Noah Schnapp"],
-        releaseDate: "July 15, 2016",
-        duration: "Episodes range from ~45 minutes",
-        reviews: [
-          { id: 1, user: "Sarah Williams", rating: 5, comment: "Best superhero film ever made!" },
-          { id: 2, user: "Tom Brown", rating: 4, comment: "Amazing performance by Heath Ledger." }
-        ]
-      },
-      {
-        id: 4,
-        title: "Extraction",
-        poster: "extraction-1.jpeg",
-        description: "A black ops extraction specialist is assigned a mission to retrieve a kidnapped son of an imprisoned international crime lord.",
-        genres: ["Action", "Thriller"],
-        casts: ["Chris Hemsworth", "Randeep Hooda", "Golshifteh Farahani"],
-        releaseDate: "April 24, 2020",
-        duration: "116 minutes",
-        reviews: [
-          { id: 1, user: "Emma Davis", rating: 5, comment: "A masterpiece of modern cinema." }
-        ]
-      },
-      {
-        id: 5,
-        title: "Squid Game 3",
-        poster: "sq.jpg",
-        description: "When a young boy disappears, his friends, family and local police uncover a mystery involving secret government experiments and terrifying supernatural forces.",
-        genres: ["Drama", "Fantasy", "Horror"],
-        casts: ["Winona Ryder", "David Harbour", "Finn Wolfhard"],
-        releaseDate: "July 15, 2016",
-        duration: "50 minutes per episode",
-        reviews: [
-          { id: 1, user: "Chris Anderson", rating: 4, comment: "Revolutionary sci-fi film." },
-          { id: 2, user: "Lisa Johnson", rating: 5, comment: "Mind-blowing special effects!" }
-        ]
-      },
-      {
-        id: 6,
-        title: "Warcraft",
-        poster: "war.jpg",
-        description: "A troubled security guard begins working at Freddy Fazbear's Pizza. During his nightshift, he realizes the animatronic animals are coming to life.",
-        genres: ["Horror", "Thriller"],
-        casts: ["Josh Hutcherson", "Matthew Lillard", "Piper Rubio"],
-        releaseDate: "October 27, 2023",
-        duration: "109 minutes",
-        reviews: [
-          { id: 1, user: "Robert Wilson", rating: 5, comment: "Heartwarming and inspiring." }
-        ]
-      },
-      
-    ];
+  const [movies, setMovies] = useState([]);
+  const [loadingMovies, setLoadingMovies] = useState(true);
 
-    const savedMovies = localStorage.getItem('movieReviews');
-    if (savedMovies) {
+  useEffect(() => {
+    const fetchMovies = async () => {
       try {
-        const parsedMovies = JSON.parse(savedMovies);
-        // Merge saved movies with default movie data
-        const mergedMovies = defaultMovies.map(defaultMovie => {
-          const savedMovie = parsedMovies.find(m => m.id === defaultMovie.id);
-          if (savedMovie) {
-            // Deep merge: use saved values but keep default values for missing fields
-            return {
-              ...defaultMovie,
-              ...savedMovie,
-              reviews: savedMovie.reviews || defaultMovie.reviews || []
-            };
+        const res = await fetch('http://localhost:3000/movies');
+        if (!res.ok) throw new Error('Failed to fetch movies');
+        const data = await res.json();
+        setMovies(data);
+        localStorage.setItem('movieReviews', JSON.stringify(data));
+      } catch (err) {
+        console.warn('Could not fetch movies from API, loading from localStorage', err);
+        const savedMovies = localStorage.getItem('movieReviews');
+        if (savedMovies) {
+          try {
+            setMovies(JSON.parse(savedMovies));
+          } catch (e) {
+            setMovies([]);
           }
-          return defaultMovie;
-        });
-
-        // Add any custom movies that don't match default movies
-        const customMovies = parsedMovies.filter(
-          saved => !defaultMovies.find(def => def.id === saved.id)
-        );
-
-        return [...mergedMovies, ...customMovies];
-      } catch (error) {
-        console.error('Error loading saved movies:', error);
-        return defaultMovies;
+        } else {
+          setMovies([]);
+        }
+      } finally {
+        setLoadingMovies(false);
       }
-    }
-    return defaultMovies;
-  });
+    };
+    fetchMovies();
+  }, []);
 
   const [showAddMovie, setShowAddMovie] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -324,7 +236,7 @@ const MainPage = () => {
     return (sum / reviews.length).toFixed(1);
   };
 
-  const handleAddMovie = () => {
+  const handleAddMovie = async () => {
     if (!newMovie.title.trim()) {
       Swal.fire({
         icon: 'warning',
@@ -343,27 +255,45 @@ const MainPage = () => {
       });
       return;
     }
-    setMovies([...movies, {
-      id: Date.now(),
-      title: newMovie.title,
-      poster: newMovie.poster,
-      reviews: []
-    }]);
-    setNewMovie({ title: '', poster: '' });
-    setShowAddMovie(false);
-    
-    // Success notification
-    Swal.fire({
-      icon: 'success',
-      title: 'Movie Added',
-      text: 'Your movie has been added successfully!',
-      timer: 1500,
-      showConfirmButton: false,
-      confirmButtonColor: '#0ea5e9'
-    });
+
+    try {
+      const res = await fetch('http://localhost:3000/movies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newMovie.title, poster: newMovie.poster })
+      });
+      if (!res.ok) throw new Error('Failed to create movie');
+      const created = await res.json();
+      setMovies(prev => [...prev, created]);
+      localStorage.setItem('movieReviews', JSON.stringify([...movies, created]));
+      setNewMovie({ title: '', poster: '' });
+      setShowAddMovie(false);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Movie Added',
+        text: 'Your movie has been added successfully!',
+        timer: 1500,
+        showConfirmButton: false,
+        confirmButtonColor: '#0ea5e9'
+      });
+    } catch (err) {
+      console.error('Create movie failed, saving locally:', err);
+      const localMovie = { id: Date.now(), title: newMovie.title, poster: newMovie.poster, reviews: [] };
+      setMovies(prev => [...prev, localMovie]);
+      setNewMovie({ title: '', poster: '' });
+      setShowAddMovie(false);
+      Swal.fire({
+        icon: 'warning',
+        title: 'Saved locally',
+        text: 'Server unavailable — movie saved locally.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    }
   };
 
-  const handleEditMovie = () => {
+  const handleEditMovie = async () => {
     if (!editMovie.title.trim()) {
       Swal.fire({
         icon: 'warning',
@@ -392,34 +322,45 @@ const MainPage = () => {
       return;
     }
     if (selectedMovie) {
-      const updatedMovies = movies.map(movie => {
-        if (movie.id === selectedMovie.id) {
-          return {
-            ...movie,
-            title: editMovie.title,
-            poster: editMovie.poster
-          };
-        }
-        return movie;
-      });
-      setMovies(updatedMovies);
-      setEditMovie({ title: '', poster: '' });
-      setShowEditMovie(false);
-      setSelectedMovie(null);
-      
-      // Success notification
-      Swal.fire({
-        icon: 'success',
-        title: 'Success',
-        text: 'Movie updated successfully!',
-        timer: 1500,
-        showConfirmButton: false,
-        confirmButtonColor: '#0ea5e9'
-      });
+      try {
+        const res = await fetch(`http://localhost:3000/movies/${selectedMovie.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: editMovie.title, poster: editMovie.poster })
+        });
+        if (!res.ok) throw new Error('Failed to update movie');
+        const updated = await res.json();
+        setMovies(prev => prev.map(m => (m.id === updated.id ? updated : m)));
+        setEditMovie({ title: '', poster: '' });
+        setShowEditMovie(false);
+        setSelectedMovie(null);
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'Movie updated successfully!',
+          timer: 1500,
+          showConfirmButton: false,
+          confirmButtonColor: '#0ea5e9'
+        });
+      } catch (err) {
+        console.error('Update failed, applying locally:', err);
+        setMovies(prev => prev.map(movie => movie.id === selectedMovie.id ? { ...movie, title: editMovie.title, poster: editMovie.poster } : movie));
+        setEditMovie({ title: '', poster: '' });
+        setShowEditMovie(false);
+        setSelectedMovie(null);
+        Swal.fire({
+          icon: 'warning',
+          title: 'Saved locally',
+          text: 'Server unavailable — changes saved locally.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+      }
     }
   };
 
-  const handleAddReview = () => {
+  const handleAddReview = async () => {
     if (!newReview.comment.trim()) {
       Swal.fire({
         icon: 'warning',
@@ -429,32 +370,56 @@ const MainPage = () => {
       });
       return;
     }
-    const updatedMovies = movies.map(movie => {
-      if (movie.id === selectedMovie.id) {
-        return {
-          ...movie,
-          reviews: [...movie.reviews, { ...newReview, user: getReviewerInitial(), id: Date.now() }]
-        };
-      }
-      return movie;
-    });
-    setMovies(updatedMovies);
-    setNewReview({ user: '', rating: 5, comment: '' });
-    setShowReviewModal(false);
-    setSelectedMovie(null);
-    
-    Swal.fire({
-      icon: 'success',
-      title: 'Review Added',
-      text: 'Your review has been added successfully!',
-      timer: 1500,
-      showConfirmButton: false,
-      confirmButtonColor: '#0ea5e9'
-    });
+
+    const payload = { user: getReviewerInitial(), rating: newReview.rating, comment: newReview.comment };
+    try {
+      const res = await fetch(`http://localhost:3000/movies/${selectedMovie.id}/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error('Failed to add review');
+      const updatedMovie = await res.json();
+      setMovies(prev => prev.map(m => (m.id === updatedMovie.id ? updatedMovie : m)));
+      setNewReview({ user: '', rating: 5, comment: '' });
+      setShowReviewModal(false);
+      setSelectedMovie(null);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Review Added',
+        text: 'Your review has been added successfully!',
+        timer: 1500,
+        showConfirmButton: false,
+        confirmButtonColor: '#0ea5e9'
+      });
+    } catch (err) {
+      console.error('Add review failed, saving locally:', err);
+      const updatedMovies = movies.map(movie => {
+        if (movie.id === selectedMovie.id) {
+          return {
+            ...movie,
+            reviews: [...movie.reviews, { ...newReview, user: getReviewerInitial(), id: Date.now() }]
+          };
+        }
+        return movie;
+      });
+      setMovies(updatedMovies);
+      setNewReview({ user: '', rating: 5, comment: '' });
+      setShowReviewModal(false);
+      setSelectedMovie(null);
+      Swal.fire({
+        icon: 'warning',
+        title: 'Saved locally',
+        text: 'Server unavailable — review saved locally.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    }
   };
 
-  const handleDeleteMovie = (movieToDelete) => {
-    Swal.fire({
+  const handleDeleteMovie = async (movieToDelete) => {
+    const result = await Swal.fire({
       icon: 'warning',
       title: 'Delete this movie?',
       text: `"${movieToDelete.title}" and its reviews will be removed.`,
@@ -463,26 +428,40 @@ const MainPage = () => {
       cancelButtonText: 'Cancel',
       confirmButtonColor: '#dc2626',
       cancelButtonColor: '#6b7280'
-    }).then((result) => {
-      if (result.isConfirmed) {
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const res = await fetch(`http://localhost:3000/movies/${movieToDelete.id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Failed to delete');
         setMovies(prev => prev.filter(movie => movie.id !== movieToDelete.id));
-
-        if (selectedMovie && selectedMovie.id === movieToDelete.id) {
-          setSelectedMovie(null);
-          setShowEditMovie(false);
-          setShowReviewModal(false);
-          setShowGallery(false);
-        }
-
+      } catch (err) {
+        console.error('Delete failed, removing locally:', err);
+        setMovies(prev => prev.filter(movie => movie.id !== movieToDelete.id));
         Swal.fire({
-          icon: 'success',
-          title: 'Deleted',
-          text: 'Movie removed successfully.',
+          icon: 'warning',
+          title: 'Removed locally',
+          text: 'Server unavailable — movie removed locally.',
           timer: 1500,
           showConfirmButton: false
         });
       }
-    });
+
+      if (selectedMovie && selectedMovie.id === movieToDelete.id) {
+        setSelectedMovie(null);
+        setShowEditMovie(false);
+        setShowReviewModal(false);
+        setShowGallery(false);
+      }
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Deleted',
+        text: 'Movie removed successfully.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    }
   };
 
   const StarRating = ({ rating, onRate, interactive = false }) => {
